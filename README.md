@@ -1,1 +1,1 @@
-![SnowBoarder_small](https://github.com/user-attachments/assets/606c43c7-c243-49ed-9860-1b7804e2bd8c)
+![SnowBoarder](https://github.com/user-attachments/assets/3987ec72-4691-4f02-b0b6-871e1193f395)
