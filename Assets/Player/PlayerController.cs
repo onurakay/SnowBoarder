@@ -14,10 +14,7 @@ public class PlayerController : MonoBehaviour
     private float maxAirTime = 1f;
 
     [SerializeField, Tooltip("Delay in seconds before reloading the game.")]
-    private float reloadDelay = 1f;
-
-    [SerializeField, Tooltip("Delay in seconds before showing the message.")]
-    private float messageDelay = 0f;
+    private float reloadDelay = 1.5f;
 
     [SerializeField, Tooltip("Reference to the TextMeshPro component for displaying air time and messages.")]
     private TMP_Text airTimeText;
@@ -50,7 +47,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         HandleMovement();
 
@@ -66,29 +63,29 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovement()
     {
+        float horizontalInput = 0f;
         if (Input.GetKey(KeyCode.LeftArrow))
         {
-            rb2d.AddTorque(torqueAmount);
+            horizontalInput = 1f;
         }
         else if (Input.GetKey(KeyCode.RightArrow))
         {
-            rb2d.AddTorque(-torqueAmount);
+            horizontalInput = -1f;
         }
+
+        rb2d.AddTorque(horizontalInput * torqueAmount);
     }
 
     private void HandleAirTime()
     {
-        airTime += Time.deltaTime;
+        airTime += Time.fixedDeltaTime;
 
         if (airTime > airTimeThreshold)
         {
             countTime = airTime - airTimeThreshold;
             UpdateAirTimeText();
 
-            if (countTime > messageDelay && !messageDisplayed)
-            {
-                DisplayMessage("Where are you going!");
-            }
+            messageDisplayed = true;
 
             if (countTime > maxAirTime && messageDisplayed)
             {
@@ -108,6 +105,16 @@ public class PlayerController : MonoBehaviour
         {
             airTimeText.gameObject.SetActive(true);
             airTimeText.text = $"Air Time: {countTime:F2} seconds";
+
+            float airTimePercentage = countTime / maxAirTime;
+            if (airTimePercentage > 0.8f)
+            {
+                airTimeText.color = Color.red;
+            }
+            else
+            {
+                airTimeText.color = Color.white;
+            }
         }
     }
 
