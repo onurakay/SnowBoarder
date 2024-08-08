@@ -6,3 +6,4 @@
 - Tracks the player's air time.
 - The game reloads if the player stays in the air too long.
 - Air time text changes color to red when close to the maximum air time.
+- finish line advances to the next level
