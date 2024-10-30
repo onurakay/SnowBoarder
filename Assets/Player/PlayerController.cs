@@ -4,9 +4,11 @@ using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Movement Settings")]
     [SerializeField, Tooltip("The amount of torque applied when moving left or right.")]
     private float torqueAmount = 10f;
 
+    [Header("Air Time Settings")]
     [SerializeField, Tooltip("Time in seconds to start counting air time.")]
     private float airTimeThreshold = 0.1f;
 
@@ -16,105 +18,82 @@ public class PlayerController : MonoBehaviour
     [SerializeField, Tooltip("Delay in seconds before reloading the game.")]
     private float reloadDelay = 1.5f;
 
+    [Header("UI References")]
     [SerializeField, Tooltip("Reference to the TextMeshPro component for displaying air time and messages.")]
     private TMP_Text airTimeText;
 
     private Rigidbody2D rb2d;
-    private SceneController sceneController;
-
     private bool isGrounded = false;
     private float airTime = 0f;
-    private float countTime = 0f;
-    private bool messageDisplayed = false;
     private bool isReloading = false;
 
     private void Start()
     {
         rb2d = GetComponent<Rigidbody2D>();
-        sceneController = FindObjectOfType<SceneController>();
+        // validations
+        if (rb2d == null)
+        {
+            Debug.LogError("Rigidbody2D component missing from Player.");
+        }
 
         if (airTimeText == null)
         {
             Debug.LogError("AirTimeText is not assigned in the inspector.");
-            return;
+        }
+        else
+        {
+            airTimeText.gameObject.SetActive(false);
         }
 
-        airTimeText.gameObject.SetActive(false);
-
-        if (sceneController == null)
+        if (SceneController.Instance == null)
         {
-            Debug.LogError("SceneController not found in the scene.");
+            Debug.LogError("SceneController instance not found.");
+        }
+    }
+
+    private void Update()
+    {
+        if (!isGrounded && !isReloading)
+        {
+            airTime += Time.deltaTime;
+
+            if (airTime > airTimeThreshold)
+            {
+                float countTime = airTime - airTimeThreshold;
+                UpdateAirTimeUI(countTime);
+
+                if (countTime > maxAirTime)
+                {
+                    DisplayMessage("You've been flying too much! Time to land!");
+                    if (!isReloading)
+                    {
+                        isReloading = true;
+                        StartCoroutine(ReloadSceneAfterDelay());
+                    }
+                }
+            }
         }
     }
 
     private void FixedUpdate()
     {
         HandleMovement();
-
-        if (!isGrounded && !isReloading)
-        {
-            HandleAirTime();
-        }
-        else
-        {
-            ResetAirTime();
-        }
     }
 
     private void HandleMovement()
     {
-        float horizontalInput = 0f;
-        if (Input.GetKey(KeyCode.LeftArrow))
-        {
-            horizontalInput = 1f;
-        }
-        else if (Input.GetKey(KeyCode.RightArrow))
-        {
-            horizontalInput = -1f;
-        }
-
+        float horizontalInput = Input.GetAxisRaw("Horizontal");
         rb2d.AddTorque(horizontalInput * torqueAmount);
     }
 
-    private void HandleAirTime()
-    {
-        airTime += Time.fixedDeltaTime;
-
-        if (airTime > airTimeThreshold)
-        {
-            countTime = airTime - airTimeThreshold;
-            UpdateAirTimeText();
-
-            messageDisplayed = true;
-
-            if (countTime > maxAirTime && messageDisplayed)
-            {
-                DisplayMessage("You've been flying too much! Time to land!");
-                if (!isReloading)
-                {
-                    isReloading = true;
-                    StartCoroutine(ReloadSceneAfterDelay());
-                }
-            }
-        }
-    }
-
-    private void UpdateAirTimeText()
+    private void UpdateAirTimeUI(float countTime)
     {
         if (airTimeText != null)
         {
             airTimeText.gameObject.SetActive(true);
             airTimeText.text = $"Air Time: {countTime:F2} seconds";
-
             float airTimePercentage = countTime / maxAirTime;
-            if (airTimePercentage > 0.8f)
-            {
-                airTimeText.color = Color.red;
-            }
-            else
-            {
-                airTimeText.color = Color.white;
-            }
+            airTimeText.color = airTimePercentage > 0.8f ? Color.red : Color.white;
         }
     }
 
@@ -123,7 +102,7 @@ public class PlayerController : MonoBehaviour
         if (airTimeText != null)
         {
             airTimeText.text = message;
-            messageDisplayed = true;
+            airTimeText.color = Color.yellow;
         }
     }
 
@@ -134,7 +113,6 @@ public class PlayerController : MonoBehaviour
         if (airTimeText != null && !isReloading)
         {
             airTimeText.gameObject.SetActive(false);
-            messageDisplayed = false;
         }
     }
 
@@ -143,6 +121,7 @@ public class PlayerController : MonoBehaviour
         if (other.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
+            ResetAirTime();
         }
     }
 
@@ -157,9 +136,6 @@ public class PlayerController : MonoBehaviour
     private IEnumerator ReloadSceneAfterDelay()
     {
         yield return new WaitForSeconds(reloadDelay);
-        if (sceneController != null)
-        {
-            sceneController.ReloadScene();
-        }
+        SceneController.Instance?.ReloadScene();
     }
 }

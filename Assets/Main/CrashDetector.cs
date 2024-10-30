@@ -1,35 +1,37 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CrashDetector : MonoBehaviour
 {
-    [SerializeField] ParticleSystem crashEffect;
-    [SerializeField] float reloadDelay = 1f;
+    [SerializeField] private ParticleSystem crashEffect;
+    [SerializeField] private float reloadDelay = 1f;
 
-    SceneController sceneController;
+    private bool hasCrashed = false;
 
     private void Start()
     {
-        sceneController = FindObjectOfType<SceneController>();
-        if (sceneController == null)
+        if (crashEffect == null)
         {
-            Debug.LogError("SceneController not found in the scene. Please make sure it's added to the scene.");
+            Debug.LogError("CrashEffect  isnt assigned");
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D other) 
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        if(other.CompareTag("Ground"))
+        if (hasCrashed) return; // prevent multiple triggers
+
+        if (other.CompareTag("Ground"))
         {
-            if (sceneController != null)
+            //"Crash detection with "Ground"
+            if (SceneController.Instance != null)
             {
-                crashEffect.Play();
+                crashEffect?.Play();
                 StartCoroutine(ReloadSceneAfterDelay());
+                hasCrashed = true;
             }
             else
             {
-                Debug.LogError("SceneController reference is null.");
+                Debug.LogError("SceneController instance is null.");
             }
         }
     }
@@ -37,6 +39,6 @@ public class CrashDetector : MonoBehaviour
     private IEnumerator ReloadSceneAfterDelay()
     {
         yield return new WaitForSeconds(reloadDelay);
-        sceneController.ReloadScene();
+        SceneController.Instance.ReloadScene();
     }
 }
