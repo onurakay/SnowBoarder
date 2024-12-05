@@ -1,4 +1,4 @@
-![SnowBoarder](https://github.com/user-attachments/assets/3987ec72-4691-4f02-b0b6-871e1193f395)
+![snow-boarder-gameplay](https://github.com/user-attachments/assets/1771c6ef-1303-4541-81c1-79de8ff18dbb)
 # Snow Boarder
 
 - Arrow keys move the player left and right.
